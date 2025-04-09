@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import { useToast } from "../contexts/ToastContext"
@@ -12,6 +12,7 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("user") // Track active tab state
+  const [isReady, setIsReady] = useState(false)
 
   // Admin login form state
   const [adminCredentials, setAdminCredentials] = useState({
@@ -24,6 +25,27 @@ function Login() {
     username: "",
     password: "",
   })
+
+  // Set isReady after a small delay to prevent white screen flash
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true)
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Show loading screen until ready
+  if (!isReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleAdminLogin = (e) => {
     e.preventDefault()

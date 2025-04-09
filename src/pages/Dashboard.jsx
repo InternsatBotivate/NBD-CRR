@@ -38,8 +38,8 @@ function DashboardPage() {
     },
     orderStatusReasons: {
       lostReasons: [],
-      holdReasons: []
-    }
+      holdReasons: [],
+    },
   })
 
   // Google Sheet details
@@ -48,14 +48,17 @@ function DashboardPage() {
   const orderStatusSheetName = "Order Status"
 
   // Use pendingTasks state instead of allPendingTasks variable
-  const allPendingTasks = pendingTasks.length > 0 ? pendingTasks : [
-    ...pendingEnquiries,
-    ...pendingQuotations,
-    ...pendingValidations,
-    ...pendingScreenshots,
-    ...pendingFollowups,
-    ...pendingOrders,
-  ].sort((a, b) => a.days - b.days)
+  const allPendingTasks =
+    pendingTasks.length > 0
+      ? pendingTasks
+      : [
+          ...pendingEnquiries,
+          ...pendingQuotations,
+          ...pendingValidations,
+          ...pendingScreenshots,
+          ...pendingFollowups,
+          ...pendingOrders,
+        ].sort((a, b) => a.days - b.days)
 
   const stageChartRef = useRef(null)
   const conversionChartRef = useRef(null)
@@ -219,11 +222,11 @@ function DashboardPage() {
       if (data.table && data.table.rows) {
         // Skip header row
         for (let i = 1; i < data.table.rows.length; i++) {
-          const row = data.table.rows[i];
-          
+          const row = data.table.rows[i]
+
           // Check if column D has any value (yes, no, or hold)
           if (row.c && row.c[3] && row.c[3].v) {
-            count++;
+            count++
           }
         }
       }
@@ -255,45 +258,45 @@ function DashboardPage() {
       }
 
       // Explicitly look for Column D (index 3) which has order status values
-      const statusColumnIndex = 3; // Column D is index 3 (0-based)
-      
-      console.log("Counting order statuses in Column D");
-      
+      const statusColumnIndex = 3 // Column D is index 3 (0-based)
+
+      console.log("Counting order statuses in Column D")
+
       // Process each row to count the status values
       if (data.table && data.table.rows) {
         // Skip header row, start from index 1
         for (let i = 1; i < data.table.rows.length; i++) {
-          const row = data.table.rows[i];
-          
-          if (!row.c || !row.c[statusColumnIndex] || !row.c[statusColumnIndex].v) continue;
-          
-          const status = row.c[statusColumnIndex].v.toString().trim().toLowerCase();
-          
+          const row = data.table.rows[i]
+
+          if (!row.c || !row.c[statusColumnIndex] || !row.c[statusColumnIndex].v) continue
+
+          const status = row.c[statusColumnIndex].v.toString().trim().toLowerCase()
+
           // Log for debugging
           if (i < 5) {
-            console.log(`Row ${i} status: ${status}`);
+            console.log(`Row ${i} status: ${status}`)
           }
-          
+
           // Count based on the status values in Column D
           if (status === "yes") {
-            orderStatusBreakdown.received++;
+            orderStatusBreakdown.received++
           } else if (status === "no") {
-            orderStatusBreakdown.lost++;
+            orderStatusBreakdown.lost++
           } else if (status === "hold") {
-            orderStatusBreakdown.hold++;
+            orderStatusBreakdown.hold++
           }
         }
       }
 
-      console.log("Order status breakdown:", orderStatusBreakdown);
-      return orderStatusBreakdown;
+      console.log("Order status breakdown:", orderStatusBreakdown)
+      return orderStatusBreakdown
     } catch (error) {
-      console.error("Error fetching order status breakdown:", error);
+      console.error("Error fetching order status breakdown:", error)
       return {
         received: 0,
         lost: 0,
         hold: 0,
-      };
+      }
     }
   }
 
@@ -313,71 +316,75 @@ function DashboardPage() {
       const holdReasons = {}
 
       // Column indexes
-      const statusColumnIndex = 3;     // Column D - Order Status
-      const lostReasonColumnIndex = 11; // Column L - Order Lost Reason
-      const holdReasonColumnIndex = 13; // Column N - Order Hold Reason
-      
-      console.log("Analyzing order status reasons");
-      
+      const statusColumnIndex = 3 // Column D - Order Status
+      const lostReasonColumnIndex = 11 // Column L - Order Lost Reason
+      const holdReasonColumnIndex = 13 // Column N - Order Hold Reason
+
+      console.log("Analyzing order status reasons")
+
       // Process each row to count reason occurrences
       if (data.table && data.table.rows) {
         // Skip header row, start from index 1
         for (let i = 1; i < data.table.rows.length; i++) {
-          const row = data.table.rows[i];
-          
-          if (!row.c || !row.c[statusColumnIndex]) continue;
-          
+          const row = data.table.rows[i]
+
+          if (!row.c || !row.c[statusColumnIndex]) continue
+
           // Only process rows with a status
           if (row.c[statusColumnIndex].v) {
-            const status = row.c[statusColumnIndex].v.toString().trim().toLowerCase();
-            
+            const status = row.c[statusColumnIndex].v.toString().trim().toLowerCase()
+
             // For lost orders, count lost reasons
             if (status === "no" && row.c[lostReasonColumnIndex] && row.c[lostReasonColumnIndex].v) {
-              const reason = row.c[lostReasonColumnIndex].v.toString().trim();
-              lostReasons[reason] = (lostReasons[reason] || 0) + 1;
+              const reason = row.c[lostReasonColumnIndex].v.toString().trim()
+              lostReasons[reason] = (lostReasons[reason] || 0) + 1
             }
-            
+
             // For hold orders, count hold reasons
             if (status === "hold" && row.c[holdReasonColumnIndex] && row.c[holdReasonColumnIndex].v) {
-              const reason = row.c[holdReasonColumnIndex].v.toString().trim();
-              holdReasons[reason] = (holdReasons[reason] || 0) + 1;
+              const reason = row.c[holdReasonColumnIndex].v.toString().trim()
+              holdReasons[reason] = (holdReasons[reason] || 0) + 1
             }
           }
         }
       }
 
       // Convert to arrays of {reason, count, percentage} objects
-      const lostReasonsArray = Object.entries(lostReasons).map(([reason, count]) => {
-        const totalLost = Object.values(lostReasons).reduce((sum, c) => sum + c, 0);
-        return {
-          reason,
-          count,
-          percentage: totalLost > 0 ? Math.round((count / totalLost) * 100) : 0
-        };
-      }).sort((a, b) => b.count - a.count);
+      const lostReasonsArray = Object.entries(lostReasons)
+        .map(([reason, count]) => {
+          const totalLost = Object.values(lostReasons).reduce((sum, c) => sum + c, 0)
+          return {
+            reason,
+            count,
+            percentage: totalLost > 0 ? Math.round((count / totalLost) * 100) : 0,
+          }
+        })
+        .sort((a, b) => b.count - a.count)
 
-      const holdReasonsArray = Object.entries(holdReasons).map(([reason, count]) => {
-        const totalHold = Object.values(holdReasons).reduce((sum, c) => sum + c, 0);
-        return {
-          reason,
-          count,
-          percentage: totalHold > 0 ? Math.round((count / totalHold) * 100) : 0
-        };
-      }).sort((a, b) => b.count - a.count);
+      const holdReasonsArray = Object.entries(holdReasons)
+        .map(([reason, count]) => {
+          const totalHold = Object.values(holdReasons).reduce((sum, c) => sum + c, 0)
+          return {
+            reason,
+            count,
+            percentage: totalHold > 0 ? Math.round((count / totalHold) * 100) : 0,
+          }
+        })
+        .sort((a, b) => b.count - a.count)
 
-      console.log("Lost reasons:", lostReasonsArray);
-      console.log("Hold reasons:", holdReasonsArray);
-      
+      console.log("Lost reasons:", lostReasonsArray)
+      console.log("Hold reasons:", holdReasonsArray)
+
       return {
         lostReasons: lostReasonsArray,
-        holdReasons: holdReasonsArray
-      };
+        holdReasons: holdReasonsArray,
+      }
     } catch (error) {
-      console.error("Error fetching order status reasons:", error);
+      console.error("Error fetching order status reasons:", error)
       return {
         lostReasons: [],
-        holdReasons: []
-      };
+        holdReasons: [],
+      }
     }
   }
 
@@ -565,7 +572,7 @@ function DashboardPage() {
         stageBreakdown,
         orderStatusBreakdown,
         fetchedPendingTasks, // Rename to avoid conflicts
-        orderStatusReasons,  // New data for reasons
+        orderStatusReasons, // New data for reasons
       ] = await Promise.all([
         fetchTotalEnquiries(),
         fetchTotalQuotations(),
@@ -574,11 +581,11 @@ function DashboardPage() {
         fetchStageBreakdown(),
         fetchOrderStatusBreakdown(),
         fetchAllPendingTasks(),
-        fetchOrderStatusReasons(),  // Call our new function
+        fetchOrderStatusReasons(), // Call our new function
       ])
 
       // Update pendingTasks state with the fetched tasks
-      setPendingTasks(fetchedPendingTasks);
+      setPendingTasks(fetchedPendingTasks)
 
       const conversionRate = totalEnquiries > 0 ? Math.round((totalOrders / totalEnquiries) * 100) : 0
 
@@ -591,7 +598,7 @@ function DashboardPage() {
         pendingTasks: fetchedPendingTasks.length,
         stageBreakdown,
         orderStatusBreakdown,
-        orderStatusReasons,  // Add reasons to dashboard stats
+        orderStatusReasons, // Add reasons to dashboard stats
       })
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
@@ -815,7 +822,7 @@ function DashboardPage() {
     const data = [dashboardStats.totalEnquiries, dashboardStats.totalQuotations, dashboardStats.totalOrders]
 
     const maxValue = Math.max(...data)
-    
+
     // If no data, show a message
     if (maxValue === 0) {
       ctx.fillStyle = "#666"
@@ -825,7 +832,7 @@ function DashboardPage() {
       ctx.fillText("No conversion data available", centerX, height / 2 + padding)
       return
     }
-    
+
     const maxWidth = width * 0.8
 
     // Draw funnel chart
@@ -874,30 +881,29 @@ function DashboardPage() {
     })
   }
 
-
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-gradient-to-br from-indigo-50 to-purple-50">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+    <div className="flex-1 space-y-4 p-2 md:p-8 pt-6 bg-gradient-to-br from-indigo-50 to-purple-50">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Dashboard
         </h2>
         <button
-  onClick={fetchDashboardData}
-  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
-  disabled={isLoading}
->
-  {isLoading ? (
-    <>
-      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-      Refreshing...
-    </>
-  ) : (
-    <>
-      <i className="fas fa-sync-alt mr-2"></i>
-      Refresh Data
-    </>
-  )}
-</button>
+          onClick={fetchDashboardData}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center justify-center md:justify-start"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-sync-alt mr-2"></i>
+              Refresh Data
+            </>
+          )}
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -944,7 +950,7 @@ function DashboardPage() {
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : activeTab === "overview" ? (
           <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <div className="bg-white rounded-lg border-l-4 border-l-indigo-500 shadow-md hover:shadow-lg transition-shadow p-4">
                 <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div className="text-sm font-medium">Total Enquiries</div>
@@ -1013,7 +1019,7 @@ function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <div className="col-span-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="col-span-full lg:col-span-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-t-lg p-4">
                   <div className="font-bold text-lg">Pending Tasks by Stage</div>
                   <div className="text-indigo-100 text-sm">Distribution of tasks across different stages</div>
@@ -1023,7 +1029,7 @@ function DashboardPage() {
                 </div>
               </div>
 
-              <div className="col-span-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="col-span-full lg:col-span-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-t-lg p-4">
                   <div className="font-bold text-lg">Order Status</div>
                   <div className="text-blue-100 text-sm">Distribution of order statuses</div>
@@ -1039,27 +1045,27 @@ function DashboardPage() {
                 <div className="font-bold text-lg">Pending Tasks</div>
                 <div className="text-indigo-100 text-sm">Tasks requiring immediate attention</div>
               </div>
-              <div className="p-4">
+              <div className="p-4 overflow-x-auto">
                 <div className="border rounded-md overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Enquiry No.
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Company
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Stage
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Priority
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Days
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Action
                         </th>
                       </tr>
@@ -1067,10 +1073,12 @@ function DashboardPage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {pendingTasks.slice(0, 5).map((task) => (
                         <tr key={task.id}>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">{task.enquiryNo}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">{task.companyName}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">{task.stage}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm font-medium">
+                            {task.enquiryNo}
+                          </td>
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">{task.companyName}</td>
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">{task.stage}</td>
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap">
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${
                                 task.priority.toLowerCase() === "high"
@@ -1083,11 +1091,11 @@ function DashboardPage() {
                               {task.priority}
                             </span>
                           </td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">{task.days}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-sm">
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">{task.days}</td>
+                          <td className="px-2 md:px-4 py-2 whitespace-nowrap text-xs md:text-sm">
                             <Link
                               to={`${task.formLink}/${task.enquiryNo}`}
-                              className="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50"
+                              className="px-2 md:px-3 py-1 border border-gray-300 rounded-md text-xs md:text-sm text-gray-700 hover:bg-gray-50"
                             >
                               Process
                             </Link>
@@ -1109,7 +1117,7 @@ function DashboardPage() {
           </>
         ) : (
           <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <div className="bg-white rounded-lg border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-shadow p-4">
                 <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div className="text-sm font-medium">Total Orders</div>

@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+"use client"
+
+import { useState } from "react"
 
 function StageLayout({ title, description, pendingContent, historyContent, formLink, formLinkText }) {
-  const [activeTab, setActiveTab] = useState("pending");
-  
+  const [activeTab, setActiveTab] = useState("pending")
+
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-4 md:py-6 px-2 md:px-4">
       {/* Main header with title and action button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{title}</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-0">{title}</h1>
         {/* <Link
           to={formLink}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center"
@@ -17,7 +18,7 @@ function StageLayout({ title, description, pendingContent, historyContent, formL
           {formLinkText}
         </Link> */}
       </div>
-      
+
       {/* Tab navigation */}
       <div className="space-y-4">
         <div className="bg-white border-b border-gray-200">
@@ -44,24 +45,16 @@ function StageLayout({ title, description, pendingContent, historyContent, formL
             </button>
           </div>
         </div>
-        
+
         {/* Content panel */}
         <div className="bg-white rounded-lg shadow border">
-          {activeTab === "pending" && (
-            <div className="p-4">
-              {pendingContent}
-            </div>
-          )}
-          
-          {activeTab === "history" && (
-            <div className="p-4">
-              {historyContent}
-            </div>
-          )}
+          {activeTab === "pending" && <div className="p-2 md:p-4 overflow-x-auto">{pendingContent}</div>}
+
+          {activeTab === "history" && <div className="p-2 md:p-4 overflow-x-auto">{historyContent}</div>}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default StageLayout;
+export default StageLayout
