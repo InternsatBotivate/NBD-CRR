@@ -7,19 +7,22 @@ import { useAuth } from "../contexts/AuthContext"
 import { Toast } from "../components/Toast"
 
 function AppLayout() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, userRole, userPermissions } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Only redirect if authentication check is complete and user is not authenticated
-    if (!isLoading && !isAuthenticated && location.pathname !== "/login") {
-      navigate("/login")
+    // Redirect logic based on authentication
+    if (!isLoading) {
+      // Not authenticated and not on login page
+      if (!isAuthenticated && location.pathname !== "/login") {
+        navigate("/login")
+        return
+      }
     }
 
     // Set a small delay to ensure components are properly loaded
-    // This helps prevent the white screen flash on mobile
     const timer = setTimeout(() => {
       setIsReady(true)
     }, 100)
@@ -27,7 +30,7 @@ function AppLayout() {
     return () => clearTimeout(timer)
   }, [isAuthenticated, navigate, location.pathname, isLoading])
 
-  // Show nothing while authentication state is loading
+  // Show loading screen until ready
   if (isLoading || !isReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">

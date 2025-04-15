@@ -98,19 +98,9 @@ function Sidebar() {
     },
   ]
 
-  // Filter routes based on user permissions
-  const filteredRoutes = routes.filter((route) => userRole === "admin" || userPermissions[route.permission])
-
-  // Add user management route for admin only
-  if (userRole === "admin") {
-    filteredRoutes.push({
-      title: "User Management",
-      icon: "user-group",
-      href: "/user-management",
-      active: location.pathname === "/user-management",
-      permission: "userManagement",
-    })
-  }
+  // Filter routes based on user permissions for both admin and regular users
+  // Now both users are restricted based solely on what's in userPermissions
+  const filteredRoutes = routes.filter((route) => userPermissions[route.permission])
 
   // Close sidebar when clicking a link on mobile
   const handleLinkClick = () => {
